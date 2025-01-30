@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import ProductGrid from '@/components/ProductGrid';
 
 // Datos de productos
 const productos = {
@@ -68,7 +69,7 @@ const productos = {
   ]
 };
 
-export default function Coleccion() {
+function CollectionContent() {
   const searchParams = useSearchParams();
   const [categoriaActiva, setCategoriaActiva] = useState(searchParams.get('categoria') || 'todos');
 
@@ -80,15 +81,15 @@ export default function Coleccion() {
     <main className="min-h-screen bg-[#F8F8F8]">
       {/* Header de la colección con imagen de fondo */}
       <section className="relative h-[50vh] md:h-[60vh] bg-[#1A1A1A]">
-  <div className="absolute inset-0">
-    <Image
-      src={`/images/${categoriaActiva === 'cuco' ? 'cuco' : categoriaActiva === 'lusmi' ? 'lusmi' : 'all'}-header.jpg`}
-      alt="Colección Header"
-      fill
-      className="object-cover opacity-60" // Reducimos la opacidad de la imagen
-    />
-    <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/50" /> {/* Oscurecemos más el overlay */}
-  </div>
+        <div className="absolute inset-0">
+          <Image
+            src={`/images/${categoriaActiva === 'cuco' ? 'cuco' : categoriaActiva === 'lusmi' ? 'lusmi' : 'all'}-header.jpg`}
+            alt="Colección Header"
+            fill
+            className="object-cover opacity-60" // Reducimos la opacidad de la imagen
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/50" /> {/* Oscurecemos más el overlay */}
+        </div>
         <div className="relative h-full flex flex-col items-center justify-center text-center px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -211,5 +212,20 @@ export default function Coleccion() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function ColeccionPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F8F8]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+          <p className="text-gray-600">Cargando colección...</p>
+        </div>
+      </div>
+    }>
+      <CollectionContent />
+    </Suspense>
   );
 }
