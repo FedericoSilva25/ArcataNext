@@ -6,7 +6,11 @@ import Cart from './Cart';
 import { useCart } from '@/context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function Navbar() {
+interface NavbarProps {
+  onCartOpen: () => void;
+}
+
+export default function Navbar({ onCartOpen }: NavbarProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { items } = useCart();
@@ -53,7 +57,7 @@ export default function Navbar() {
           <div className="flex items-center space-x-4">
             {/* Botón del carrito */}
             <button
-              onClick={() => setIsCartOpen(true)}
+              onClick={onCartOpen}
               className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
             >
               <svg
