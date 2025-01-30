@@ -8,14 +8,15 @@ interface CartItem {
   precio: number;
   imagen: string;
   talla: string;
+  color: string;
   cantidad: number;
 }
 
 interface CartContextType {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (id: number, talla: string) => void;
-  updateQuantity: (id: number, talla: string, cantidad: number) => void;
+  removeItem: (id: number, talla: string, color: string) => void;
+  updateQuantity: (id: number, talla: string, color: string, cantidad: number) => void;
   clearCart: () => void;
   totalPrice: number;
 }
@@ -28,12 +29,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const addItem = (newItem: CartItem) => {
     setItems(currentItems => {
       const existingItem = currentItems.find(
-        item => item.id === newItem.id && item.talla === newItem.talla
+        item => item.id === newItem.id && 
+               item.talla === newItem.talla && 
+               item.color === newItem.color
       );
 
       if (existingItem) {
         return currentItems.map(item =>
-          item.id === newItem.id && item.talla === newItem.talla
+          item.id === newItem.id && 
+          item.talla === newItem.talla && 
+          item.color === newItem.color
             ? { ...item, cantidad: item.cantidad + 1 }
             : item
         );
@@ -43,23 +48,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const removeItem = (id: number, talla: string) => {
+  const removeItem = (id: number, talla: string, color: string) => {
     setItems(currentItems =>
       currentItems.filter(
-        item => !(item.id === id && item.talla === talla)
+        item => !(item.id === id && item.talla === talla && item.color === color)
       )
     );
   };
 
-  const updateQuantity = (id: number, talla: string, cantidad: number) => {
+  const updateQuantity = (id: number, talla: string, color: string, cantidad: number) => {
     if (cantidad === 0) {
-      removeItem(id, talla);
+      removeItem(id, talla, color);
       return;
     }
 
     setItems(currentItems =>
       currentItems.map(item =>
-        item.id === id && item.talla === talla
+        item.id === id && item.talla === talla && item.color === color
           ? { ...item, cantidad }
           : item
       )

@@ -1,55 +1,39 @@
 'use client';
 
+import { useCart } from '@/context/CartContext';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useCart } from '@/context/CartContext';
+import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-interface CheckoutFormData {
-  nombre: string;
-  email: string;
-  telefono: string;
-  direccion: string;
-  ciudad: string;
-  codigoPostal: string;
-  metodoPago: 'tarjeta' | 'transferencia';
-}
-
-export default function Checkout() {
-  const router = useRouter();
+export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
-  const [formData, setFormData] = useState<CheckoutFormData>({
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
     nombre: '',
     email: '',
     telefono: '',
     direccion: '',
     ciudad: '',
+    provincia: '',
     codigoPostal: '',
-    metodoPago: 'tarjeta'
+    notas: ''
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      // Aquí deberías hacer tu llamada a la API real
       const orderData = {
-        ...formData,
         items,
-        totalPrice
+        total: totalPrice,
+        cliente: formData
       };
 
-      const response = await fetch('/api/checkout', {
+      const response = await fetch('/api/send-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -57,14 +41,15 @@ export default function Checkout() {
         body: JSON.stringify(orderData),
       });
 
-      if (!response.ok) throw new Error('Error al procesar el pedido');
+      if (!response.ok) {
+        throw new Error('Error al enviar el pedido');
+      }
 
-      // Limpiar carrito
+      // Limpiar el carrito
       clearCart();
       
       // Redirigir a página de confirmación
       router.push('/checkout/confirmacion');
-
     } catch (error) {
       alert('Hubo un error al procesar tu pedido. Por favor, intenta nuevamente.');
     } finally {
@@ -72,63 +57,70 @@ export default function Checkout() {
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
+
   if (items.length === 0) {
-    router.push('/coleccion');
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-light mb-4">Tu carrito está vacío</h1>
+          <Link 
+            href="/coleccion"
+            className="text-sm text-black border-b border-black pb-0.5 hover:text-gray-600 hover:border-gray-600 transition-colors"
+          >
+            Volver a la tienda
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <main className="min-h-screen pt-20">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-3xl font-light tracking-wider mb-12 text-center"
-        >
-          FINALIZAR COMPRA
-        </motion.h1>
-
+    <main className="min-h-screen bg-gray-50 py-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Formulario */}
-          <motion.form
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="space-y-8"
-            onSubmit={handleSubmit}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white p-8 shadow-sm"
           >
-            <div className="space-y-6">
-              <h2 className="text-xl font-light">INFORMACIÓN DE CONTACTO</h2>
-              
-              <div>
-                <label htmlFor="nombre" className="block text-sm text-gray-600 mb-2">
-                  Nombre completo
-                </label>
-                <input
-                  type="text"
-                  id="nombre"
-                  name="nombre"
-                  value={formData.nombre}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 
-                           focus:ring-black focus:border-transparent outline-none"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="email" className="block text-sm text-gray-600 mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 
-                           focus:ring-black focus:border-transparent outline-none"
-                />
+            <h1 className="text-2xl font-light mb-8 tracking-wider">DATOS DE CONTACTO</h1>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="nombre" className="block text-sm text-gray-600 mb-2">
+                    Nombre completo
+                  </label>
+                  <input
+                    type="text"
+                    id="nombre"
+                    name="nombre"
+                    required
+                    value={formData.nombre}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 focus:border-black outline-none transition-colors"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm text-gray-600 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 focus:border-black outline-none transition-colors"
+                  />
+                </div>
               </div>
 
               <div>
@@ -139,18 +131,13 @@ export default function Checkout() {
                   type="tel"
                   id="telefono"
                   name="telefono"
+                  required
                   value={formData.telefono}
                   onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 
-                           focus:ring-black focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-200 focus:border-black outline-none transition-colors"
                 />
               </div>
-            </div>
 
-            <div className="space-y-6">
-              <h2 className="text-xl font-light">DIRECCIÓN DE ENVÍO</h2>
-              
               <div>
                 <label htmlFor="direccion" className="block text-sm text-gray-600 mb-2">
                   Dirección
@@ -159,15 +146,14 @@ export default function Checkout() {
                   type="text"
                   id="direccion"
                   name="direccion"
+                  required
                   value={formData.direccion}
                   onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 
-                           focus:ring-black focus:border-transparent outline-none"
+                  className="w-full px-4 py-3 border border-gray-200 focus:border-black outline-none transition-colors"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="ciudad" className="block text-sm text-gray-600 mb-2">
                     Ciudad
@@ -176,103 +162,103 @@ export default function Checkout() {
                     type="text"
                     id="ciudad"
                     name="ciudad"
+                    required
                     value={formData.ciudad}
                     onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 
-                             focus:ring-black focus:border-transparent outline-none"
+                    className="w-full px-4 py-3 border border-gray-200 focus:border-black outline-none transition-colors"
                   />
                 </div>
                 <div>
-                  <label htmlFor="codigoPostal" className="block text-sm text-gray-600 mb-2">
-                    Código Postal
+                  <label htmlFor="provincia" className="block text-sm text-gray-600 mb-2">
+                    Provincia
                   </label>
                   <input
                     type="text"
-                    id="codigoPostal"
-                    name="codigoPostal"
-                    value={formData.codigoPostal}
-                    onChange={handleChange}
+                    id="provincia"
+                    name="provincia"
                     required
-                    className="w-full px-4 py-3 border border-gray-200 rounded-md focus:ring-2 
-                             focus:ring-black focus:border-transparent outline-none"
+                    value={formData.provincia}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 focus:border-black outline-none transition-colors"
                   />
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-6">
-              <h2 className="text-xl font-light">MÉTODO DE PAGO</h2>
-              
-              <div className="space-y-4">
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="radio"
-                    name="metodoPago"
-                    value="tarjeta"
-                    checked={formData.metodoPago === 'tarjeta'}
-                    onChange={handleChange}
-                    className="form-radio text-black"
-                  />
-                  <span>Tarjeta de crédito/débito</span>
+              <div>
+                <label htmlFor="codigoPostal" className="block text-sm text-gray-600 mb-2">
+                  Código Postal
                 </label>
-                <label className="flex items-center space-x-3">
-                  <input
-                    type="radio"
-                    name="metodoPago"
-                    value="transferencia"
-                    checked={formData.metodoPago === 'transferencia'}
-                    onChange={handleChange}
-                    className="form-radio text-black"
-                  />
-                  <span>Transferencia bancaria</span>
-                </label>
+                <input
+                  type="text"
+                  id="codigoPostal"
+                  name="codigoPostal"
+                  required
+                  value={formData.codigoPostal}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-200 focus:border-black outline-none transition-colors"
+                />
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className={`w-full bg-black text-white py-4 text-sm tracking-wider
-                       transition-colors ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-900'}`}
-            >
-              {isSubmitting ? 'PROCESANDO...' : 'CONFIRMAR PEDIDO'}
-            </button>
-          </motion.form>
+              <div>
+                <label htmlFor="notas" className="block text-sm text-gray-600 mb-2">
+                  Notas adicionales (opcional)
+                </label>
+                <textarea
+                  id="notas"
+                  name="notas"
+                  rows={4}
+                  value={formData.notas}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-200 focus:border-black outline-none transition-colors"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-black text-white py-4 hover:bg-gray-900 transition-colors tracking-wider disabled:bg-gray-400"
+              >
+                {isSubmitting ? 'PROCESANDO...' : 'CONFIRMAR PEDIDO'}
+              </button>
+            </form>
+          </motion.div>
 
           {/* Resumen del pedido */}
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-gray-50 p-8 space-y-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="lg:sticky lg:top-20 h-fit"
           >
-            <h2 className="text-xl font-light mb-6">RESUMEN DEL PEDIDO</h2>
-            
-            <div className="space-y-4">
-              {items.map((item) => (
-                <div key={`${item.id}-${item.talla}`} className="flex justify-between items-center">
-                  <div>
-                    <p className="font-medium">{item.nombre}</p>
-                    <p className="text-sm text-gray-500">Talla: {item.talla}</p>
-                    <p className="text-sm text-gray-500">Cantidad: {item.cantidad}</p>
+            <div className="bg-white p-8 shadow-sm">
+              <h2 className="text-xl font-light mb-6 tracking-wider">RESUMEN DEL PEDIDO</h2>
+              <div className="space-y-4">
+                {items.map((item) => (
+                  <div key={`${item.id}-${item.talla}`} className="flex gap-4">
+                    <div className="relative w-20 h-24 bg-gray-50">
+                      <Image
+                        src={item.imagen}
+                        alt={item.nombre}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-medium">{item.nombre}</h3>
+                      <p className="text-sm text-gray-500">Talla: {item.talla}</p>
+                      <p className="text-sm text-gray-500">Cantidad: {item.cantidad}</p>
+                      <p className="text-sm font-medium mt-1">
+                        ${(item.precio * item.cantidad).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-                  <p className="font-medium">${(item.precio * item.cantidad).toLocaleString()}</p>
+                ))}
+              </div>
+              <div className="border-t border-gray-100 mt-6 pt-6">
+                <div className="flex justify-between text-lg font-medium">
+                  <span>Total</span>
+                  <span>${totalPrice.toLocaleString()}</span>
                 </div>
-              ))}
-            </div>
-
-            <div className="border-t pt-6 space-y-4">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>${totalPrice.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Envío</span>
-                <span>Calculado al confirmar</span>
-              </div>
-              <div className="flex justify-between text-lg font-medium pt-4 border-t">
-                <span>Total</span>
-                <span>${totalPrice.toLocaleString()}</span>
               </div>
             </div>
           </motion.div>

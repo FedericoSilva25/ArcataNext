@@ -202,13 +202,13 @@ export default function ProductoPage({ params }: { params: { id: string } }) {
       return;
     }
 
-    // Ahora usamos la imagen seleccionada en lugar de siempre la primera
     addItem({
       id: producto.id,
       nombre: producto.nombre,
       precio: producto.precio,
-      imagen: producto.imagenes[mainImage], // Usamos la imagen seleccionada
+      imagen: producto.imagenes[mainImage],
       talla: selectedSize,
+      color: getVariantName(mainImage),
       cantidad: 1
     });
   };
