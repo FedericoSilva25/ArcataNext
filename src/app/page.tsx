@@ -246,7 +246,7 @@ export default function Home() {
               ÚNETE A NUESTRA COMUNIDAD
             </h2>
             <p className="text-xl text-white/80">
-              Suscríbete para recibir las últimas novedades y ofertas exclusivas
+              Suscríbete para recibir las últimas novedades y ofertas exclusivas de nuestro local
             </p>
             <form className="flex gap-4 max-w-md mx-auto">
               <input
